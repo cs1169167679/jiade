@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1e3a8a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="电梯助手">
+<link rel="manifest" href="manifest.json">
+<title>电梯维修助手</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  margin:0;background:#eef1f7;color:#16202e;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+}
+button{font-family:inherit;font-size:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+input,textarea{font-family:inherit;font-size:16px;}
+
+#topbar{
+  position:sticky;top:0;z-index:40;
+  background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 60%,#3b82f6 100%);
+  color:#fff;
+  padding:calc(env(safe-area-inset-top) + 14px) 16px 12px;
+  border-radius:0 0 20px 20px;
+  box-shadow:0 8px 24px rgba(30,58,138,.28);
+  user-select:none;-webkit-user-select:none;
+}
+#appTitle{
+  margin:0;font-size:19px;font-weight:700;letter-spacing:.6px;
+  display:flex;align-items:center;gap:10px;
+}
+#lockBadge{
+  font-size:11px;font-weight:500;padding:3px 9px;border-radius:99px;
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);
+  transition:.2s;white-space:nowrap;
+}
+#lockBadge.unlocked{background:#22c55e;border-color:#22c55e;}
+#holdBar{height:3px;border-radius:2px;background:rgba(255,255,255,.2);margin-top:10px;opacity:0;transition:opacity .15s;overflow:hidden;}
+#holdBar.show{opacity:1;}
+#holdBar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#7dd3fc,#a7f3d0);border-radius:2px;}
+
+#view{padding:14px 14px calc(env(safe-area-inset-bottom) + 40px);max-width:640px;margin:0 auto;}
+
+.searchbar{
+  display:flex;align-items:center;gap:8px;background:#fff;border-radius:14px;
+  padding:11px 14px;box-shadow:0 1px 3px rgba(16,24,40,.07);margin-bottom:14px;
+}
+.searchbar .ico{font-size:15px;opacity:.5;}
+.searchbar input{flex:1;border:none;outline:none;background:transparent;font-size:15px;min-width:0;color:#16202e;}
+.searchbar input::placeholder{color:#a8b3c4;}
+.searchbar .clear{
+  border:none;background:#dfe4ee;color:#64748b;width:20px;height:20px;border-radius:50%;
+  font-size:12px;display:flex;align-items:center;justify-content:center;padding:0;flex:none;
+}
+
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+.qc{
+  position:relative;background:#fff;border-radius:16px;padding:14px 6px 12px;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  box-shadow:0 1px 3px rgba(16,24,40,.07);font-size:13px;color:#334155;
+  transition:transform .12s;
+}
+.qc:active{transform:scale(.96);}
+.qc .qi{font-size:22px;line-height:1;}
+.qc b{position:absolute;top:6px;right:10px;font-size:11px;color:#94a3b8;font-weight:600;}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:4px 2px 10px;gap:10px;}
+.section-head h2{font-size:15px;margin:0;font-weight:600;color:#334155;}
+.count{font-size:12.5px;color:#94a3b8;}
+.mini-btn{
+  background:#e0e9ff;color:#2563eb;border-radius:99px;padding:6px 14px;
+  font-size:13px;font-weight:600;white-space:nowrap;
+}
+.mini-btn:active{background:#c7d8ff;}
+
+.brand{
+  display:flex;align-items:center;gap:12px;background:#fff;border-radius:14px;
+  padding:13px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(16,24,40,.07);
+  transition:transform .12s,background .12s;
+}
+.brand:active{transform:scale(.985);background:#f8faff;}
+.brand-ico{width:38px;height:38px;border-radius:11px;background:#eef3ff;display:flex;align-items:center;justify-content:center;font-size:19px;flex:none;}
+.brand-main{flex:1;min-width:0;}
+.brand-name{font-weight:600;font-size:15px;}
+.brand-sub{font-size:12px;color:#8492a6;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chev{color:#c2ccdb;font-size:20px;flex:none;}
+
+.code-card{background:#fff;border-radius:14px;padding:13px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(16,24,40,.07);}
+.code-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.code-num{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:700;font-size:14px;
+  background:#eef3ff;color:#2563eb;padding:3px 9px;border-radius:8px;letter-spacing:.5px;flex:none;
+}
+.code-brand{font-size:12px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.note-title{flex:1;font-weight:600;font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.star{margin-left:auto;font-size:19px;color:#cbd5e1;line-height:1;padding:2px 4px;flex:none;transition:transform .12s;}
+.star.on{color:#f5b301;}
+.star:active{transform:scale(1.3);}
+.code-desc{font-size:14px;color:#3f4b5e;white-space:pre-wrap;word-break:break-word;line-height:1.65;}
+.code-ops{display:flex;gap:8px;margin-top:10px;justify-content:flex-end;}
+.code-ops button{font-size:12.5px;padding:5px 14px;border-radius:99px;background:#f1f5f9;color:#475569;font-weight:500;}
+.code-ops button.danger{background:#fee;color:#e5484d;}
+.code-ops button:active{opacity:.7;}
+
+.io-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
+.io-btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:13px;border-radius:14px;background:#fff;color:#334155;font-weight:500;
+  box-shadow:0 1px 3px rgba(16,24,40,.07);
+}
+.io-btn:active{background:#f1f5f9;}
+
+.empty{text-align:center;color:#94a3b8;font-size:13.5px;padding:34px 10px;line-height:1.8;}
+.tip{text-align:center;font-size:12px;color:#a0aec0;margin-top:18px;line-height:1.7;}
+
+.detail-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;}
+.back-btn{font-size:15px;color:#2563eb;font-weight:600;padding:6px 4px;}
+.head-ops{display:flex;gap:6px;}
+.icon-btn{width:34px;height:34px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 1px 3px rgba(16,24,40,.07);}
+.icon-btn.danger{color:#e5484d;}
+.icon-btn:active{background:#f1f5f9;}
+.brand-hero{
+  background:linear-gradient(135deg,#2563eb,#3b82f6);border-radius:16px;padding:16px;color:#fff;
+  margin-bottom:14px;box-shadow:0 6px 18px rgba(37,99,235,.25);
+}
+.brand-hero-name{font-size:19px;font-weight:700;word-break:break-word;}
+.brand-hero-note{font-size:13px;opacity:.88;margin-top:4px;word-break:break-word;}
+.brand-hero-meta{font-size:12px;opacity:.8;margin-top:8px;}
+
+.overlay{
+  position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:100;
+  display:flex;align-items:flex-end;justify-content:center;
+  animation:fadeIn .18s;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.sheet{
+  background:#fff;width:100%;max-width:640px;border-radius:20px 20px 0 0;
+  padding:20px 18px calc(env(safe-area-inset-bottom) + 18px);
+  animation:slideUp .24s cubic-bezier(.2,.8,.3,1);
+  max-height:88vh;overflow-y:auto;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-title{font-size:17px;font-weight:700;margin-bottom:6px;}
+.sheet-desc{font-size:13.5px;color:#7b8794;margin-bottom:14px;line-height:1.6;word-break:break-word;}
+.sheet-actions{display:flex;gap:10px;margin-top:16px;}
+.btn{flex:1;padding:13px;border-radius:12px;font-size:15px;font-weight:600;transition:transform .12s,opacity .12s;}
+.btn.ghost{background:#f1f5f9;color:#475569;}
+.btn.primary{background:#2563eb;color:#fff;}
+.btn.danger{background:#e5484d;color:#fff;}
+.btn:active{transform:scale(.97);opacity:.9;}
+
+.inp{
+  width:100%;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 14px;
+  font-size:16px;outline:none;margin-bottom:10px;background:#f8fafc;
+  transition:.15s;display:block;color:#16202e;
+}
+.inp:focus{border-color:#2563eb;background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+textarea.inp{resize:vertical;line-height:1.6;min-height:84px;}
+.err{color:#e5484d;font-size:13px;min-height:18px;margin-top:-4px;}
+
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.shake{animation:shake .4s;}
+
+.toast{
+  position:fixed;left:50%;bottom:14%;transform:translate(-50%,12px);
+  background:rgba(15,23,42,.92);color:#fff;padding:10px 20px;border-radius:99px;
+  font-size:13.5px;z-index:200;opacity:0;transition:.25s;pointer-events:none;
+  max-width:80vw;text-align:center;line-height:1.5;
+}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+</style>
+</head>
+<body>
+
+<header id="topbar">
+  <h1 id="appTitle">
+    <span>🔧 电梯维修助手</span>
+    <span id="lockBadge">🔒 只读</span>
+  </h1>
+  <div id="holdBar"><i></i></div>
+</header>
+
+<main id="view"></main>
+
+<script>
+/* =========================================================
+   电梯维修助手  v1.0
+   数据全部保存在本机 localStorage，不上传任何服务器
+   ========================================================= */
+
+const STORE_KEY = 'elevator_helper_v1';
+const HOLD_MS   = 10000;
+
+const SEED = {
+  password: '888888',
+  brands: [
+    {
+      id:'b_otis', name:'奥的斯 OTIS', note:'Gen2 / GeN2 系列',
+      items:[
+        {id:'c1', code:'0100', desc:'运行超时。\n检查门机开合是否到位、门区感应器（光电/磁感应）是否损坏或偏移。', fav:false},
+        {id:'c2', code:'0201', desc:'变频器过流。\n检查输出侧接线、电机绝缘、编码器信号，必要时重做电机自整定。', fav:false},
+        {id:'c3', code:'0300', desc:'门锁回路断开。\n逐层检查门锁触点、轿门锁、门刀与门轮间隙。', fav:false}
+      ]
+    },
+    {
+      id:'b_kani', name:'康力 KANGLI', note:'',
+      items:[
+        {id:'k1', code:'E01', desc:'安全回路断开。\n按 急停 → 限速器 → 安全钳 → 盘车手轮 顺序排查。', fav:false},
+        {id:'k2', code:'E07', desc:'平层偏差过大。\n检查编码器、平层感应器、钢丝绳是否打滑。', fav:false}
+      ]
+    }
+  ],
+  experiences: [
+    {id:'e1', title:'电梯抖动 / 异响快速排查', fav:true,
+     content:'1. 检查导靴磨损与间隙\n2. 检查导轨接头是否平滑\n3. 检查钢丝绳张力是否均匀\n4. 检查曳引轮绳槽磨损情况'},
+    {id:'e2', title:'困人救援标准流程', fav:false,
+     content:'① 确认轿厢位置（机房/楼层指示/盘车观察）\n② 断开总电源并挂牌\n③ 盘车至平层区（±150mm 内）\n④ 用三角钥匙开门放人\n⑤ 恢复送电，记录故障'}
+  ],
+  debugDocs: [
+    {id:'d1', title:'默纳克 NICE3000 主板小键盘', fav:false,
+     content:'F0：楼层显示\nF1：运行状态\nF2：故障代码\nF8：参数设置\nUP/DOWN 翻页，SET 确认'}
+  ]
+};
+
+let DB = loadDB();
+
+function loadDB(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){
+      const d = JSON.parse(raw);
+      return {
+        password : d.password || '888888',
+        brands   : Array.isArray(d.brands) ? d.brands : [],
+        experiences: Array.isArray(d.experiences) ? d.experiences : [],
+        debugDocs: Array.isArray(d.debugDocs) ? d.debugDocs : []
+      };
+    }
+  }catch(e){ console.warn(e); }
+  return JSON.parse(JSON.stringify(SEED));
+}
+function saveDB(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(DB)); }
+  catch(e){ toast('保存失败：存储空间不足'); }
+}
+
+const state = {
+  view: 'home',
+  brandId: null,
+  brandQuery: '',
+  query: '',
+  unlocked: false
+};
+
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+  ));
+}
+function getBrand(id){ return DB.brands.find(b => b.id === id); }
+
+function toast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => {
+    t.classList.remove('show');
+    setTimeout(() => t.remove(), 300);
+  }, 2000);
+}
+
+function showSheet(opts){
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <div class="sheet">
+      <div class="sheet-title">${opts.title || ''}</div>
+      ${opts.desc ? `<div class="sheet-desc">${opts.desc}</div>` : ''}
+      <div class="sheet-body"></div>
+      <div class="sheet-actions"></div>
+    </div>`;
+  const bodyEl = overlay.querySelector('.sheet-body');
+  if(typeof opts.body === 'string') bodyEl.innerHTML = opts.body;
+  else if(opts.body) bodyEl.appendChild(opts.body);
+
+  const actions = overlay.querySelector('.sheet-actions');
+  (opts.buttons || []).forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'btn ' + (b.primary ? 'primary' : 'ghost') + (b.danger ? ' danger' : '');
+    btn.textContent = b.text;
+    btn.addEventListener('click', () => {
+      if(b.onClick) b.onClick(overlay);
+      if(!b.keepOpen) close();
+    });
+    actions.appendChild(btn);
+  });
+
+  document.body.appendChild(overlay);
+  overlay._close = close;
+  function close(){ if(overlay.parentNode) overlay.remove(); }
+  if(opts.onMount) opts.onMount(overlay, close);
+  return overlay;
+}
+
+function confirmDialog(title, desc, okText='继续删除'){
+  return new Promise(resolve => {
+    showSheet({
+      title, desc,
+      buttons: [
+        {text:'取消', onClick: () => resolve(false)},
+        {text: okText, danger:true, onClick: () => resolve(true)}
+      ]
+    });
+  });
+}
+
+function askPassword({title='安全验证', desc=''} = {}){
+  return new Promise(resolve => {
+    showSheet({
+      title: '🔒 ' + title,
+      desc,
+      body: `<input class="inp pw" type="password" inputmode="numeric" autocomplete="off" placeholder="请输入管理密码">
+             <div class="err"></div>`,
+      buttons: [
+        {text:'取消', onClick: () => resolve(false)},
+        {text:'确定', primary:true, keepOpen:true, onClick: o => {
+          const v = o.querySelector('.pw').value;
+          if(v === DB.password){
+            o._close();
+            resolve(true);
+          }else{
+            const inp = o.querySelector('.pw');
+            inp.value = '';
+            o.querySelector('.err').textContent = '密码错误，请重新输入';
+            const s = o.querySelector('.sheet');
+            s.classList.remove('shake');
+            void s.offsetWidth;
+            s.classList.add('shake');
+          }
+        }}
+      ],
+      onMount: o => {
+        const i = o.querySelector('.pw');
+        setTimeout(() => i.focus(), 120);
+        i.addEventListener('keydown', e => {
+          if(e.key === 'Enter') o.querySelector('.btn.primary').click();
+        });
+      }
+    });
+  });
+}
+
+async function confirmDelete(msg){
+  const ok1 = await confirmDialog('⚠️ 删除确认', msg);
+  if(!ok1) return false;
+  const ok2 = await askPassword({title:'安全验证', desc:'删除操作需要输入管理密码'});
+  return ok2;
+}
+
+function requireUnlocked(){
+  if(state.unlocked) return true;
+  toast('只读模式：长按顶部标题 10 秒解锁');
+  return false;
+}
+
+function render(opts = {}){
+  const root = $('#view');
+  root.innerHTML = '';
+
+  switch(state.view){
+    case 'home':        renderHome(root); break;
+    case 'brand':       renderBrand(root); break;
+    case 'favorites':   renderFavorites(root); break;
+    case 'experiences': renderItemList(root, 'experiences', '💡 经验'); break;
+    case 'debug':       renderItemList(root, 'debugDocs', '📐 调试资料'); break;
+    default:            renderHome(root);
+  }
+  updateLockBadge();
+  if(!opts.keepScroll) window.scrollTo(0, 0);
+}
+
+function updateLockBadge(){
+  const el = $('#lockBadge');
+  if(!el) return;
+  el.textContent = state.unlocked ? '🔓 可编辑' : '🔒 只读';
+  el.classList.toggle('unlocked', state.unlocked);
+}
+
+function renderHome(root){
+  root.innerHTML = `
+    <div class="searchbar">
+      <span class="ico">🔍</span>
+      <input id="q" type="text" inputmode="search" autocomplete="off"
+             placeholder="搜索品牌 / 故障码 / 经验 / 资料"
+             value="${esc(state.query)}">
+      <button class="clear" id="clearQ" ${state.query ? '' : 'hidden'}>✕</button>
+    </div>
+    <div id="homeBody"></div>
+  `;
+
+  const qInput   = $('#q', root);
+  const clearBtn = $('#clearQ', root);
+
+  qInput.addEventListener('input', () => {
+    state.query = qInput.value;
+    clearBtn.hidden = !qInput.value;
+    paintHomeBody();
+  });
+  clearBtn.addEventListener('click', () => {
+    state.query = '';
+    qInput.value = '';
+    clearBtn.hidden = true;
+    paintHomeBody();
+    qInput.focus();
+  });
+
+  function paintHomeBody(){
+    const body = $('#homeBody', root);
+    const q = state.query.trim();
+    body.innerHTML = q ? buildSearch(q) : buildHomeDefault();
+  }
+  paintHomeBody();
+}
+
+function buildHomeDefault(){
+  const favCount = countFavorites();
+  const brandsHTML = DB.brands.length
+    ? DB.brands.map(b => brandRowHTML(b)).join('')
+    : '<div class="empty">还没有品牌<br>点击右上角「＋ 添加」创建</div>';
+
+  return `
+    <div class="quick">
+      <button class="qc" data-act="nav" data-view="favorites">
+        <span class="qi">⭐</span><span>收藏</span><b>${favCount}</b>
+      </button>
+      <button class="qc" data-act="nav" data-view="experiences">
+        <span class="qi">💡</span><span>经验</span><b>${DB.experiences.length}</b>
+      </button>
+      <button class="qc" data-act="nav" data-view="debug">
+        <span class="qi">📐</span><span>调试资料</span><b>${DB.debugDocs.length}</b>
+      </button>
+    </div>
+
+    <div class="section-head">
+      <h2>电梯品牌</h2>
+      <button class="mini-btn" data-act="add-brand">＋ 添加</button>
+    </div>
+    <div class="brand-list">${brandsHTML}</div>
+
+    <div class="io-row">
+      <button class="io-btn" data-act="export"><span>📤</span>导出备份</button>
+      <button class="io-btn" data-act="import"><span>📥</span>导入文件</button>
+    </div>
+
+    <div class="tip">
+      只读模式：可查看、可搜索、可收藏<br>
+      长按顶部「电梯维修助手」10 秒 → 输入密码 → 解锁编辑
+    </div>
+  `;
+}
+
+function brandRowHTML(b){
+  return `
+    <div class="brand" data-act="open-brand" data-id="${b.id}">
+      <div class="brand-ico">🏢</div>
+      <div class="brand-main">
+        <div class="brand-name">${esc(b.name)}</div>
+        <div class="brand-sub">${b.items.length} 条故障码${b.note ? ' · ' + esc(b.note) : ''}</div>
+      </div>
+      <div class="chev">›</div>
+    </div>`;
+}
+
+function countFavorites(){
+  let n = 0;
+  DB.brands.forEach(b => b.items.forEach(i => { if(i.fav) n++; }));
+  DB.experiences.forEach(i => { if(i.fav) n++; });
+  DB.debugDocs.forEach(i => { if(i.fav) n++; });
+  return n;
+}
+
+function buildSearch(q){
+  const s = q.toLowerCase();
+  const has = t => String(t || '').toLowerCase().includes(s);
+  const blocks = [];
+
+  const bHits = DB.brands.filter(b => has(b.name) || has(b.note));
+  if(bHits.length){
+    blocks.push(`<div class="section-head"><h2>品牌</h2><span class="count">${bHits.length}</span></div>`);
+    blocks.push(bHits.map(brandRowHTML).join(''));
+  }
+
+  const cHits = [];
+  DB.brands.forEach(b => b.items.forEach(it => {
+    if(has(it.code) || has(it.desc)) cHits.push({b, it});
+  }));
+  if(cHits.length){
+    blocks.push(`<div class="section-head"><h2>故障码</h2><span class="count">${cHits.length}</span></div>`);
+    blocks.push(cHits.map(x => codeCardHTML(x.b.id, x.it, x.b.name)).join(''));
+  }
+
+  const eHits = DB.experiences.filter(x => has(x.title) || has(x.content));
+  if(eHits.length){
+    blocks.push(`<div class="section-head"><h2>经验</h2><span class="count">${eHits.length}</span></div>`);
+    blocks.push(eHits.map(i => itemCardHTML('experiences', i)).join(''));
+  }
+
+  const dHits = DB.debugDocs.filter(x => has(x.title) || has(x.content));
+  if(dHits.length){
+    blocks.push(`<div class="section-head"><h2>调试资料</h2><span class="count">${dHits.length}</span></div>`);
+    blocks.push(dHits.map(i => itemCardHTML('debugDocs', i)).join(''));
+  }
+
+  if(!blocks.length){
+    return `<div class="empty">没有找到「${esc(q)}」相关内容</div>`;
+  }
+  return blocks.join('');
+}
+
+function codeCardHTML(brandId, item, brandName){
+  return `
+    <div class="code-card">
+      <div class="code-top">
+        <span class="code-num">${esc(item.code)}</span>
+        ${brandName ? `<span class="code-brand">${esc(brandName)}</span>` : ''}
+        <span class="star ${item.fav ? 'on' : ''}"
+              data-act="toggle-fav" data-type="code"
+              data-id="${item.id}" data-parent="${brandId}">${item.fav ? '★' : '☆'}</span>
+      </div>
+      <div class="code-desc">${esc(item.desc) || '<span style="color:#a8b3c4">（暂无定义）</span>'}</div>
+      ${state.unlocked ? `
+      <div class="code-ops">
+        <button data-act="edit-code" data-id="${item.id}" data-parent="${brandId}">编辑</button>
+        <button class="danger" data-act="del-code" data-id="${item.id}" data-parent="${brandId}">删除</button>
+      </div>` : ''}
+    </div>`;
+}
+
+function itemCardHTML(key, item){
+  return `
+    <div class="code-card">
+      <div class="code-top">
+        <div class="note-title">${esc(item.title)}</div>
+        <span class="star ${item.fav ? 'on' : ''}"
+              data-act="toggle-fav" data-type="${key}" data-id="${item.id}">${item.fav ? '★' : '☆'}</span>
+      </div>
+      <div class="code-desc">${esc(item.content)}</div>
+      ${state.unlocked ? `
+      <div class="code-ops">
+        <button data-act="edit-item" data-type="${key}" data-id="${item.id}">编辑</button>
+        <button class="danger" data-act="del-item" data-type="${key}" data-id="${item.id}">删除</button>
+      </div>` : ''}
+    </div>`;
+}
+
+function renderBrand(root){
+  const b = getBrand(state.brandId);
+  if(!b){ state.view = 'home'; render(); return; }
+
+  root.innerHTML = `
+    <div class="detail-head">
+      <button class="back-btn" data-act="back">‹ 返回</button>
+      <div class="head-ops">
+        ${state.unlocked ? `
+          <button class="icon-btn" data-act="edit-brand" data-id="${b.id}" title="编辑品牌">✏️</button>
+          <button class="icon-btn danger" data-act="del-brand" data-id="${b.id}" title="删除品牌">🗑️</button>
+        ` : ''}
+      </div>
+    </div>
+
+    <div class="brand-hero">
+      <div class="brand-hero-name">${esc(b.name)}</div>
+      ${b.note ? `<div class="brand-hero-note">${esc(b.note)}</div>` : ''}
+      <div class="brand-hero-meta">共 ${b.items.length} 条故障码</div>
+    </div>
+
+    <div class="searchbar">
+      <span class="ico">🔍</span>
+      <input id="bq" type="text" inputmode="search" autocomplete="off"
+             placeholder="搜索该品牌故障码" value="${esc(state.brandQuery)}">
+    </div>
+
+    <div class="section-head">
+      <h2>故障码</h2>
+      ${state.unlocked ? `<button class="mini-btn" data-act="add-code">＋ 添加</button>` : ''}
+    </div>
+    <div id="codeList"></div>
+  `;
+
+  const listEl = $('#codeList', root);
+  const bq = $('#bq', root);
+
+  function paint(){
+    const q = (state.brandQuery || '').trim().toLowerCase();
+    const items = q
+      ? b.items.filter(i => String(i.code || '').toLowerCase().includes(q) ||
+                            String(i.desc || '').toLowerCase().includes(q))
+      : b.items;
+    listEl.innerHTML = items.length
+      ? items.map(i => codeCardHTML(b.id, i)).join('')
+      : `<div class="empty">${q ? '没有匹配的故障码' : '暂无故障码，点击「＋ 添加」'}</div>`;
+  }
+
+  bq.addEventListener('input', () => { state.brandQuery = bq.value; paint(); });
+  paint();
+}
+
+function renderFavorites(root){
+  const entries = [];
+  DB.brands.forEach(b => b.items.forEach(i => {
+    if(i.fav) entries.push({kind:'code', brand:b, item:i});
+  }));
+  DB.experiences.forEach(i => { if(i.fav) entries.push({kind:'experiences', item:i}); });
+  DB.debugDocs.forEach(i => { if(i.fav) entries.push({kind:'debugDocs', item:i}); });
+
+  const html = entries.length
+    ? entries.map(e => e.kind === 'code'
+        ? codeCardHTML(e.brand.id, e.item, e.brand.name)
+        : itemCardHTML(e.kind, e.item)).join('')
+    : '<div class="empty">还没有收藏内容<br>点击任意卡片右上角 ☆ 即可收藏</div>';
+
+  root.innerHTML = `
+    <div class="detail-head"><button class="back-btn" data-act="back">‹ 返回</button></div>
+    <div class="section-head"><h2>⭐ 我的收藏</h2><span class="count">${entries.length} 条</span></div>
+    ${html}
+  `;
+}
+
+function renderItemList(root, key, title){
+  const items = DB[key] || [];
+  const html = items.length
+    ? items.map(i => itemCardHTML(key, i)).join('')
+    : `<div class="empty">还没有内容${state.unlocked ? '，点击「＋ 添加」创建' : ''}</div>`;
+
+  root.innerHTML = `
+    <div class="detail-head">
+      <button class="back-btn" data-act="back">‹ 返回</button>
+      ${state.unlocked ? `<button class="mini-btn" data-act="add-item" data-type="${key}">＋ 添加</button>` : ''}
+    </div>
+    <div class="section-head"><h2>${title}</h2><span class="count">${items.length} 条</span></div>
+    ${html}
+  `;
+}
+
+function addBrand(){
+  if(!requireUnlocked()) return;
+  showSheet({
+    title:'添加品牌',
+    body:`<input class="inp" id="bName" type="text" placeholder="品牌名称，如：奥的斯 OTIS">
+          <textarea class="inp" id="bNote" rows="2" placeholder="备注（选填），如：Gen2 系列"></textarea>
+          <div class="err"></div>`,
+    buttons:[
+      {text:'取消'},
+      {text:'保存', primary:true, keepOpen:true, onClick: o => {
+        const name = o.querySelector('#bName').value.trim();
+        if(!name){ o.querySelector('.err').textContent = '请输入品牌名称'; return; }
+        DB.brands.push({id: uid(), name, note: o.querySelector('#bNote').value.trim(), items: []});
+        saveDB();
+        o._close();
+        render({keepScroll:true});
+        toast('品牌已添加');
+      }}
+    ],
+    onMount: o => setTimeout(() => o.querySelector('#bName').focus(), 150)
+  });
+}
+
+function editBrand(id){
+  if(!requireUnlocked()) return;
+  const b = getBrand(id);
+  if(!b) return;
+  showSheet({
+    title:'编辑品牌',
+    body:`<input class="inp" id="bName" type="text" value="${esc(b.name)}" placeholder="品牌名称">
+          <textarea class="inp" id="bNote" rows="2" placeholder="备注">${esc(b.note || '')}</textarea>
+          <div class="err"></div>`,
+    buttons:[
+      {text:'取消'},
+      {text:'保存', primary:true, keepOpen:true, onClick: o => {
+        const name = o.querySelector('#bName').value.trim();
+        if(!name){ o.querySelector('.err').textContent = '请输入品牌名称'; return; }
+        b.name = name;
+        b.note = o.querySelector('#bNote').value.trim();
+        saveDB();
+        o._close();
+        render({keepScroll:true});
+        toast('已保存');
+      }}
+    ]
+  });
+}
+
+async function delBrand(id){
+  if(!requireUnlocked()) return;
+  const b = getBrand(id);
+  if(!b) return;
+  const ok = await confirmDelete(
+    `确定删除品牌「${b.name}」？<br>该品牌下 <b>${b.items.length}</b> 条故障码将一并删除，且不可恢复。`
+  );
+  if(!ok) return;
+  DB.brands = DB.brands.filter(x => x.id !== id);
+  saveDB();
+  state.view = 'home';
+  state.brandId = null;
+  render();
+  toast('已删除');
+}
+
+function addCode(){
+  if(!requireUnlocked()) return;
+  const b = getBrand(state.brandId);
+  if(!b) return;
+  showSheet({
+    title:'添加故障码',
+    desc: b.name,
+    body:`<input class="inp" id="cCode" type="text" placeholder="故障码，如：0100 / E07">
+          <textarea class="inp" id="cDesc" rows="5" placeholder="故障定义 / 原因 / 处理方法"></textarea>
+          <div class="err"></div>`,
+    buttons:[
+      {text:'取消'},
+      {text:'保存', primary:true, keepOpen:true, onClick: o => {
+        const code = o.querySelector('#cCode').value.trim();
+        if(!code){ o.querySelector('.err').textContent = '请输入故障码'; return; }
+        b.items.unshift({
+          id: uid(), code,
+          desc: o.querySelector('#cDesc').value.trim(),
+          fav: false
+        });
+        saveDB();
+        o._close();
+        render({keepScroll:true});
+        toast('故障码已添加');
+      }}
+    ],
+    onMount: o => setTimeout(() => o.querySelector('#cCode').focus(), 150)
+  });
+}
+
+function editCode(codeId, brandId){
+  if(!requireUnlocked()) return;
+  const b = getBrand(brandId || state.brandId);
+  if(!b) return;
+  const item = b.items.find(x => x.id === codeId);
+  if(!item) return;
+  showSheet({
+    title:'编辑故障码',
+    desc: b.name,
+    body:`<input class="inp" id="cCode" type="text" value="${esc(item.code)}" placeholder="故障码">
+          <textarea class="inp" id="cDesc" rows="6" placeholder="故障定义 / 原因 / 处理方法">${esc(item.desc)}</textarea>
+          <div class="err"></div>`,
+    buttons:[
+      {text:'取消'},
+      {text:'保存', primary:true, keepOpen:true, onClick: o => {
+        const code = o.querySelector('#cCode').value.trim();
+        if(!code){ o.querySelector('.err').textContent = '请输入故障码'; return; }
+        item.code = code;
+        item.desc = o.querySelector('#cDesc').value.trim();
+        saveDB();
+        o._close();
+        render({keepScroll:true});
+        toast('已保存');
+      }}
+    ]
+  });
+}
+
+async function delCode(codeId, brandId){
+  if(!requireUnlocked()) return;
+  const b = getBrand(brandId || state.brandId);
+  if(!b) return;
+  const item = b.items.find(x => x.id === codeId);
+  if(!item) return;
+  const ok = await confirmDelete(`确定删除故障码「${esc(item.code)}」？<br>此操作不可恢复。`);
+  if(!ok) return;
+  b.items = b.items.filter(x => x.id !== codeId);
+  saveDB();
+  render({keepScroll:true});
+  toast('已删除');
+}
+
+function addItem(key){
+  if(!requireUnlocked()) return;
+  const label = key === 'experiences' ? '经验' : '调试资料';
+  showSheet({
+    title:`添加${label}`,
+    body:`<input class="inp" id="iTitle" type="text" placeholder="标题">
+          <textarea class="inp" id="iContent" rows="7" placeholder="内容（支持换行）"></textarea>
+          <div class="err"></div>`,
+    buttons:[
+      {text:'取消'},
+      {text:'保存', primary:true, keepOpen:true, onClick: o => {
+        const title = o.querySelector('#iTitle').value.trim();
+        if(!title){ o.querySelector('.err').textContent = '请输入标题'; return; }
+        DB[key].unshift({
+          id: uid(), title,
+          content: o.querySelector('#iContent').value.trim(),
+          fav: false
+        });
+        saveDB();
+        o._close();
+        render({keepScroll:true});
+        toast('已添加');
+      }}
+    ],
+    onMount: o => setTimeout(() => o.querySelector('#iTitle').focus(), 150)
+  });
+}
+
+function editItem(key, id){
+  if(!requireUnlocked()) return;
+  const item = (DB[key] || []).find(x => x.id === id);
+  if(!item) return;
+  showSheet({
+    title:'编辑内容',
+    body:`<input class="inp" id="iTitle" type="text" value="${esc(item.title)}" placeholder="标题">
+          <textarea class="inp" id="iContent" rows="8" placeholder="内容">${esc(item.content)}</textarea>
+          <div class="err"></div>`,
+    buttons:[
+      {text:'取消'},
+      {text:'保存', primary:true, keepOpen:true, onClick: o => {
+        const title = o.querySelector('#iTitle').value.trim();
+        if(!title){ o.querySelector('.err').textContent = '请输入标题'; return; }
+        item.title = title;
+        item.content = o.querySelector('#iContent').value.trim();
+        saveDB();
+        o._close();
+        render({keepScroll:true});
+        toast('已保存');
+      }}
+    ]
+  });
+}
+
+async function delItem(key, id){
+  if(!requireUnlocked()) return;
+  const item = (DB[key] || []).find(x => x.id === id);
+  if(!item) return;
+  const ok = await confirmDelete(`确定删除「${esc(item.title)}」？<br>此操作不可恢复。`);
+  if(!ok) return;
+  DB[key] = DB[key].filter(x => x.id !== id);
+  saveDB();
+  render({keepScroll:true});
+  toast('已删除');
+}
+
+function toggleFav(type, id, parent){
+  let item = null;
+  if(type === 'code'){
+    const b = getBrand(parent);
+    if(b) item = b.items.find(x => x.id === id);
+  }else{
+    item = (DB[type] || []).find(x => x.id === id);
+  }
+  if(!item) return false;
+  item.fav = !item.fav;
+  saveDB();
+  return item.fav;
+}
+
+function doExport(){
+  const payload = {
+    app: '电梯维修助手',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    data: DB
+  };
+  const text = JSON.stringify(payload, null, 2);
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  const filename = `电梯维修助手_备份_${stamp}.json`;
+
+  try{
+    const blob = new Blob([text], {type:'application/json;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast('已导出：' + filename);
+  }catch(e){
+    toast('导出失败，请检查浏览器权限');
+  }
+}
+
+function doImport(){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.style.display = 'none';
+  document.body.appendChild(input);
+
+  input.addEventListener('change', () => {
+    const file = input.files && input.files[0];
+    input.remove();
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      let parsed;
+      try{ parsed = JSON.parse(reader.result); }
+      catch(e){ toast('文件格式错误，无法解析'); return; }
+
+      const incoming = parsed && parsed.data ? parsed.data : parsed;
+      if(!incoming || typeof incoming !== 'object' ||
+         (!Array.isArray(incoming.brands) && !Array.isArray(incoming.experiences) && !Array.isArray(incoming.debugDocs))){
+        toast('不是有效的备份文件');
+        return;
+      }
+
+      const nB = (incoming.brands || []).length;
+      const nE = (incoming.experiences || []).length;
+      const nD = (incoming.debugDocs || []).length;
+
+      const ok = await askPassword({
+        title:'导入数据',
+        desc:'导入会修改本地数据，请输入管理密码'
+      });
+      if(!ok) return;
+
+      showSheet({
+        title:'选择导入方式',
+        desc:`文件包含：<b>${nB}</b> 个品牌 / <b>${nE}</b> 条经验 / <b>${nD}</b> 条调试资料`,
+        buttons:[
+          {text:'取消'},
+          {text:'合并导入', onClick: () => applyImport(incoming, 'merge')},
+          {text:'覆盖导入', primary:true, danger:true, onClick: () => applyImport(incoming, 'replace')}
+        ]
+      });
+    };
+    reader.readAsText(file, 'utf-8');
+  });
+
+  input.click();
+}
+
+function applyImport(incoming, mode){
+  if(mode === 'replace'){
+    DB = {
+      password   : incoming.password || DB.password,
+      brands     : Array.isArray(incoming.brands) ? incoming.brands : [],
+      experiences: Array.isArray(incoming.experiences) ? incoming.experiences : [],
+      debugDocs  : Array.isArray(incoming.debugDocs) ? incoming.debugDocs : []
+    };
+  }else{
+    (incoming.brands || []).forEach(nb => {
+      if(!nb || !nb.name) return;
+      const exist = DB.brands.find(b => b.name === nb.name);
+      if(!exist){
+        DB.brands.push({
+          id: nb.id || uid(),
+          name: nb.name,
+          note: nb.note || '',
+          items: Array.isArray(nb.items) ? nb.items : []
+        });
+      }else{
+        const seen = new Set(exist.items.map(i => (i.code || '') + '|' + (i.desc || '')));
+        (nb.items || []).forEach(it => {
+          const key = (it.code || '') + '|' + (it.desc || '');
+          if(!seen.has(key)){
+            seen.add(key);
+            exist.items.push({id: it.id || uid(), code: it.code || '', desc: it.desc || '', fav: !!it.fav});
+          }
+        });
+      }
+    });
+    [['experiences','experiences'], ['debugDocs','debugDocs']].forEach(([k]) => {
+      DB[k] = DB[k] || [];
+      const seen = new Set(DB[k].map(i => (i.title || '') + '|' + (i.content || '')));
+      (incoming[k] || []).forEach(it => {
+        const key = (it.title || '') + '|' + (it.content || '');
+        if(!seen.has(key)){
+          seen.add(key);
+          DB[k].push({id: it.id || uid(), title: it.title || '', content: it.content || '', fav: !!it.fav});
+        }
+      });
+    });
+  }
+  saveDB();
+  state.query = '';
+  state.brandQuery = '';
+  render();
+  toast(mode === 'replace' ? '覆盖导入完成' : '合并导入完成');
+}
+
+function initHoldToUnlock(){
+  const title = $('#appTitle');
+  const bar   = $('#holdBar');
+  const fill  = bar.querySelector('i');
+
+  let startAt = 0, rafId = null, sx = 0, sy = 0;
+
+  function cancel(){
+    if(!startAt) return;
+    startAt = 0;
+    cancelAnimationFrame(rafId);
+    bar.classList.remove('show');
+    fill.style.width = '0%';
+  }
+
+  function finish(){
+    startAt = 0;
+    cancelAnimationFrame(rafId);
+    bar.classList.remove('show');
+    fill.style.width = '0%';
+    if(navigator.vibrate) navigator.vibrate(30);
+    openLockPanel();
+  }
+
+  function begin(e){
+    if(startAt) return;
+    startAt = Date.now();
+    sx = e.clientX; sy = e.clientY;
+    bar.classList.add('show');
+
+    const tick = () => {
+      if(!startAt) return;
+      const p = Math.min(1, (Date.now() - startAt) / HOLD_MS);
+      fill.style.width = (p * 100) + '%';
+      if(p >= 1){ finish(); return; }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+  }
+
+  title.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    begin(e);
+  });
+  title.addEventListener('pointerup', cancel);
+  title.addEventListener('pointercancel', cancel);
+  title.addEventListener('pointermove', e => {
+    if(!startAt) return;
+    if(Math.hypot(e.clientX - sx, e.clientY - sy) > 14) cancel();
+  });
+
+  if(!window.PointerEvent){
+    title.addEventListener('touchstart', e => begin(e.touches[0]), {passive:true});
+    title.addEventListener('touchend', cancel);
+    title.addEventListener('touchcancel', cancel);
+    title.addEventListener('touchmove', e => {
+      if(!startAt) return;
+      const t = e.touches[0];
+      if(Math.hypot(t.clientX - sx, t.clientY - sy) > 14) cancel();
+    }, {passive:true});
+  }
+}
+
+function openLockPanel(){
+  if(state.unlocked){
+    showSheet({
+      title:'🔓 编辑模式已开启',
+      desc:'当前可以添加、修改、删除数据。',
+      buttons:[
+        {text:'修改密码', onClick: changePassword},
+        {text:'重新锁定', primary:true, onClick: () => {
+          state.unlocked = false;
+          render({keepScroll:true});
+          toast('已锁定，仅可查看');
+        }}
+      ]
+    });
+    return;
+  }
+
+  showSheet({
+    title:'🔒 解锁编辑',
+    desc:'请输入电梯维修管理密码（默认 888888）',
+    body:`<input class="inp pw" type="password" inputmode="numeric" autocomplete="off"
+                 placeholder="管理密码">
+          <div class="err"></div>`,
+    buttons:[
+      {text:'取消'},
+      {text:'解锁', primary:true, keepOpen:true, onClick: o => {
+        const inp = o.querySelector('.pw');
+        if(inp.value === DB.password){
+          state.unlocked = true;
+          o._close();
+          updateLockBadge();
+          render({keepScroll:true});
+          toast('已解锁，可编辑');
+          if(navigator.vibrate) navigator.vibrate(40);
+        }else{
+          inp.value = '';
+          o.querySelector('.err').textContent = '密码错误，请重试';
+          const s = o.querySelector('.sheet');
+          s.classList.remove('shake'); void s.offsetWidth; s.classList.add('shake');
+        }
+      }}
+    ],
+    onMount: o => {
+      const i = o.querySelector('.pw');
+      setTimeout(() => i.focus(), 150);
+      i.addEventListener('keydown', e => {
+        if(e.key === 'Enter') o.querySelector('.btn.primary').click();
+      });
+    }
+  });
+}
+
+function changePassword(){
+  showSheet({
+    title:'修改密码',
+    body:`<input class="inp" id="oldPw"  type="password" inputmode="numeric" placeholder="当前密码">
+          <input class="inp" id="newPw"  type="password" inputmode="numeric" placeholder="新密码（4-12 位）">
+          <input class="inp" id="newPw2" type="password" inputmode="numeric" placeholder="确认新密码">
+          <div class="err"></div>`,
+    buttons:[
+      {text:'取消'},
+      {text:'保存', primary:true, keepOpen:true, onClick: o => {
+        const oldPw = o.querySelector('#oldPw').value;
+        const n1 = o.querySelector('#newPw').value.trim();
+        const n2 = o.querySelector('#newPw2').value.trim();
+        const err = o.querySelector('.err');
+        if(oldPw !== DB.password){ err.textContent = '当前密码错误'; return; }
+        if(n1.length < 4 || n1.length > 12){ err.textContent = '新密码需 4-12 位'; return; }
+        if(n1 !== n2){ err.textContent = '两次输入不一致'; return; }
+        DB.password = n1;
+        saveDB();
+        o._close();
+        toast('密码已修改，请牢记');
+      }}
+    ]
+  });
+}
+
+function handleClick(e){
+  const t = e.target.closest('[data-act]');
+  if(!t) return;
+  const act = t.dataset.act;
+  const id  = t.dataset.id;
+
+  switch(act){
+    case 'nav':
+      state.view = t.dataset.view;
+      state.query = '';
+      state.brandQuery = '';
+      render();
+      break;
+
+    case 'back':
+      state.view = 'home';
+      state.brandId = null;
+      state.brandQuery = '';
+      render();
+      break;
+
+    case 'open-brand':
+      state.view = 'brand';
+      state.brandId = id;
+      state.brandQuery = '';
+      render();
+      break;
+
+    case 'add-brand':  addBrand(); break;
+    case 'edit-brand': editBrand(id); break;
+    case 'del-brand':  delBrand(id); break;
+
+    case 'add-code':  addCode(); break;
+    case 'edit-code': editCode(id, t.dataset.parent); break;
+    case 'del-code':  delCode(id, t.dataset.parent); break;
+
+    case 'add-item':  addItem(t.dataset.type); break;
+    case 'edit-item': editItem(t.dataset.type, id); break;
+    case 'del-item':  delItem(t.dataset.type, id); break;
+
+    case 'toggle-fav': {
+      const on = toggleFav(t.dataset.type, id, t.dataset.parent);
+      if(state.view === 'favorites'){
+        render({keepScroll:true});
+      }else{
+        t.classList.toggle('on', on);
+        t.textContent = on ? '★' : '☆';
+      }
+      break;
+    }
+
+    case 'export': doExport(); break;
+    case 'import': doImport(); break;
+  }
+}
+
+(function init(){
+  $('#view').addEventListener('click', handleClick);
+  initHoldToUnlock();
+  render();
+
+  let lastTouch = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if(now - lastTouch <= 300) e.preventDefault();
+    lastTouch = now;
+  }, {passive:false});
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+
+</body>
+</html>
